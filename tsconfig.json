@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "outDir": "./dist",
+    "removeComments": true,
+    "declaration": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+  }
+}
