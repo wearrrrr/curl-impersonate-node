@@ -109,3 +109,5 @@ export class CurlImpersonate {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');
     }
 }   
+
+export default CurlImpersonate
