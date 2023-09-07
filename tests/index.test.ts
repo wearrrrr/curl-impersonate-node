@@ -1,6 +1,6 @@
 import CurlImpersonate from "../dist/index"
 
-describe("Requests ", () => {
+describe("GET Requests ", () => {
     test("Can access a regular URL", async () => {
         const ci = new CurlImpersonate("https://google.com", {
             method: "GET",
@@ -45,6 +45,29 @@ describe("Requests ", () => {
             // Handle any errors that occur during the request
             console.error(error);
             // Fail the test if there's an error
+            fail();
+        }
+    });
+})
+
+describe("POST Requests ", () => {
+    test("Can access a regular URL", async () => {
+        const ci = new CurlImpersonate("https://google.com", {
+            method: "POST",
+            headers: {
+              'sec-ch-ua': 'Chromium";v="110", "Not A(Brand";v="24", "Google Chrome";v="110',
+              'sec-ch-ua-mobile': "?0",
+              'x-user-key': 'amiami_dev',
+              'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+            },
+            timeout: 10000,
+            followRedirects: true,
+        });
+        try {
+            let result = await ci.makeRequest();
+            expect(result).not.toBeUndefined();
+        } catch (err) {
+            console.error(err);
             fail();
         }
     });

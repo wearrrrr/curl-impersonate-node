@@ -55,6 +55,9 @@ export class CurlImpersonate {
             if (this.options.method == "GET") {
                 return this.getRequest(flags, headers)
             }
+            if (this.options.method == "POST") {
+                return this.postRequest(flags, headers, this.options.body)
+            }
         } 
     }
     validateOptions(options: CurlImpersonateOptions) {
@@ -95,8 +98,10 @@ export class CurlImpersonate {
     convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');
     }
-    async getRequest(flags = this.options.flags || [], headers = '') {
-        // GET REQUEST
+
+    // Headers is a string because it is parsed down into a cURL supported format for headers before this.
+
+    async getRequest(flags = this.options.flags || [], headers: string = '') {
         if (this.options.followRedirects) {
           flags.push('-L');
         }
@@ -135,6 +140,48 @@ export class CurlImpersonate {
           // Handle any exceptions thrown during spawn
           console.error(err);
           return { stdout: '', stderr: '' };
+        }
+    }
+
+    async postRequest(flags = this.options.flags || [], headers: string = '', body = this.options.body || {}) {
+        if (this.options.followRedirects) {
+            flags.push('-L');
+        }
+        if (this.options.timeout) {
+            flags.push(`--connect-timeout ${this.options.timeout / 1000}`);
+        }
+        flags.push(`--data '${JSON.stringify(this.options.body)}'`);
+
+        let binpath = path.join(__dirname, '..', 'bin', this.binary);
+        let args = [...flags, headers, this.url];
+
+        try {
+            const curl = proc.spawn(binpath, args, { shell: true, stdio: ['inherit', 'pipe', 'pipe'] });
+            let stdoutData = '';
+
+            curl.stdout.on('data', (data: string) => {
+                stdoutData += data;
+            });
+
+            return new Promise((resolve, reject) => {
+                curl.on('close', (code: number) => {
+                    if (code === 0) {
+                        // Curl command exited successfully
+                        resolve({ stdout: stdoutData });
+                    } else {
+                        // Curl command exited with an error
+                        reject({ code, stdout: stdoutData });
+                    }
+                });
+
+                curl.on('error', (err) => {
+                    // Handle any errors that occur during spawn
+                    reject(err);
+                });
+            });
+        } catch (err) {
+            console.error(err);
+            return { stdout: '', stderr: '' };
         }
     }
 }
