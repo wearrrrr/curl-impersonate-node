@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "esModuleInterop": true,
+    "target": "ES2020",
+    "module": "CommonJS",
+    "rootDir": "./src/",
+    "declaration": true,
+    "outDir": "./dist/",                                  
+    "esModuleInterop": true,                     
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "outDir": "./dist",
-    "removeComments": true,
-    "declaration": true,
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
-  }
+    "skipLibCheck": true,
+    "lib": ["ES2020", "DOM"]
+  },
+  "exclude": ["./tests/", "./dist/", "jest.config.ts"]
 }

@@ -7,12 +7,8 @@
 */
 
 import * as proc from "child_process";
-import { fileURLToPath } from 'url';
 import * as path from 'path';
-import { inherits } from "util";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { stdout } from "process";
 
 /*
 
@@ -57,16 +53,7 @@ export class CurlImpersonate {
             let headers = this.convertHeaderObjectToCURL();
             let flags = this.options.flags || [];
             if (this.options.method == "GET") {
-                // GET REQUEST
-                if (this.options.followRedirects) {
-                    flags.push("-L")
-                }
-                if (this.options.timeout) {
-                    flags.push(`--connect-timeout ${this.options.timeout / 1000}`)
-                }
-                let binpath = path.join(__dirname, "..", "bin", this.binary)
-                let args = `${flags.join(" ")} ${headers} ${this.url}`
-                proc.spawn(`${binpath} ${args}`, { shell: true, stdio: "inherit" })
+                return this.getRequest(flags, headers)
             }
         } 
     }
@@ -108,6 +95,48 @@ export class CurlImpersonate {
     convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');
     }
-}   
+    async getRequest(flags = this.options.flags || [], headers = '') {
+        // GET REQUEST
+        if (this.options.followRedirects) {
+          flags.push('-L');
+        }
+        if (this.options.timeout) {
+          flags.push(`--connect-timeout ${this.options.timeout / 1000}`);
+        }
+        
+        let binpath = path.join(__dirname, '..', 'bin', this.binary);
+        let args = [...flags, headers, this.url];
+        
+        try {
+          const curl = proc.spawn(binpath, args, { shell: true, stdio: ['inherit', 'pipe', 'pipe'] });
+          let stdoutData = '';
+    
+          curl.stdout.on('data', (data: string) => {
+            stdoutData += data;
+          });
+    
+          return new Promise((resolve, reject) => {
+            curl.on('close', (code: number) => {
+              if (code === 0) {
+                // Curl command exited successfully
+                resolve({ stdout: stdoutData });
+              } else {
+                // Curl command exited with an error
+                reject({ code, stdout: stdoutData });
+              }
+            });
+    
+            curl.on('error', (err) => {
+              // Handle any errors that occur during spawn
+              reject(err);
+            });
+          });
+        } catch (err) {
+          // Handle any exceptions thrown during spawn
+          console.error(err);
+          return { stdout: '', stderr: '' };
+        }
+    }
+}
 
 export default CurlImpersonate
