@@ -1,8 +1,5 @@
 import * as proc from "child_process";
-import { fileURLToPath } from 'url';
 import * as path from 'path';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 export class CurlImpersonate {
     constructor(url, options) {
         this.url = url;
@@ -15,16 +12,12 @@ export class CurlImpersonate {
             this.setProperBinary();
             let headers = this.convertHeaderObjectToCURL();
             let flags = this.options.flags || [];
-            if (this.options.method == "GET") {
-                if (this.options.followRedirects) {
-                    flags.push("-L");
-                }
-                if (this.options.timeout) {
-                    flags.push(`--connect-timeout ${this.options.timeout / 1000}`);
-                }
-                let binpath = path.join(__dirname, "..", "bin", this.binary);
-                let args = `${flags.join(" ")} ${headers} ${this.url}`;
-                proc.spawn(`${binpath} ${args}`, { shell: true, stdio: "inherit" });
+            switch (this.options.method.toUpperCase()) {
+                case "GET":
+                    this.getRequest(flags, headers);
+                    break;
+                case "POST":
+                    this.postRequest(flags, headers);
             }
         }
     }
@@ -67,6 +60,28 @@ export class CurlImpersonate {
             default:
                 throw new Error(`Unsupported Platform! ${process.platform}`);
         }
+    }
+    getRequest(flags, headers) {
+        if (this.options.followRedirects) {
+            flags.push("-L");
+        }
+        if (this.options.timeout) {
+            flags.push(`--connect-timeout ${this.options.timeout / 1000}`);
+        }
+        let binpath = path.join(__dirname, "..", "bin", this.binary);
+        let args = `${flags.join(" ")} ${headers} ${this.url}`;
+        proc.spawn(`${binpath} ${args}`, { shell: true, stdio: "inherit" });
+    }
+    postRequest(flags, headers) {
+        if (this.options.followRedirects) {
+            flags.push("-L");
+        }
+        if (this.options.timeout) {
+            flags.push(`--connect-timeout ${this.options.timeout / 1000}`);
+        }
+        let binpath = path.join(__dirname, "..", "bin", this.binary);
+        let args = `${flags.join(" ")} ${headers} -d '${JSON.stringify(this.options.body)}' ${this.url}`;
+        proc.spawn(`${binpath} ${args}`, { shell: true, stdio: "inherit" });
     }
     convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');

@@ -7,18 +7,15 @@
 */
 
 import * as proc from "child_process";
-import { fileURLToPath } from 'url';
 import * as path from 'path';
-import { inherits } from "util";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
 
 /*
 
 CurlImpersonateOptions:
 
-    method: A string that should read any of the many HTTP methods, GET, POST, PATCH, PUT, OPTIONS, DELETE.
+    method: A string that should read HTTP methods, GET or POST.
     headers: HTTP Headers in the form of a key:value pair object.
     body: Only required if using a method such as POST or any other option that requires a payload.
     timeout: an integer in milliseconds for a connection time-out
@@ -56,17 +53,21 @@ export class CurlImpersonate {
             this.setProperBinary()
             let headers = this.convertHeaderObjectToCURL();
             let flags = this.options.flags || [];
-            if (this.options.method == "GET") {
-                // GET REQUEST
-                if (this.options.followRedirects) {
-                    flags.push("-L")
-                }
-                if (this.options.timeout) {
-                    flags.push(`--connect-timeout ${this.options.timeout / 1000}`)
-                }
-                let binpath = path.join(__dirname, "..", "bin", this.binary)
-                let args = `${flags.join(" ")} ${headers} ${this.url}`
-                proc.spawn(`${binpath} ${args}`, { shell: true, stdio: "inherit" })
+            if (this.options.followRedirects) {
+                flags.push("-L")
+            }
+            if (this.options.timeout) {
+                flags.push(`--connect-timeout ${this.options.timeout / 1000}`)
+            }
+            switch (this.options.method.toUpperCase()) {
+                case "GET":
+                    this.getRequest(flags, headers);
+                    break;
+                case "POST":
+                    this.postRequest(flags, headers);
+                    break;
+                default:
+                    throw new Error("Invalid Method! Valid HTTP methods are " + this.validMethods)
             }
         } 
     }
@@ -104,6 +105,18 @@ export class CurlImpersonate {
         default:
             throw new Error(`Unsupported Platform! ${process.platform}`)
         }
+    }
+    getRequest(flags: Array<string>, headers: string) {
+        // GET REQUEST
+        let binpath = path.join(__dirname, "..", "bin", this.binary)
+        let args = `${flags.join(" ")} ${headers} ${this.url}`
+        proc.spawn(`${binpath} ${args}`, { shell: true, stdio: "inherit" })
+    }
+    postRequest(flags: Array<string>, headers: string) {
+        // POST REQUEST
+        let binpath = path.join(__dirname, "..", "bin", this.binary)
+        let args = `${flags.join(" ")} ${headers} -d '${JSON.stringify(this.options.body)}' ${this.url}`
+        proc.spawn(`${binpath} ${args}`, { shell: true, stdio: "inherit" })
     }
     convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');

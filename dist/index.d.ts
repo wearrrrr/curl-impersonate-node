@@ -17,6 +17,8 @@ export declare class CurlImpersonate {
     makeRequest(): void;
     validateOptions(options: CurlImpersonateOptions): boolean;
     setProperBinary(): void;
+    getRequest(flags: Array<string>, headers: string): void;
+    postRequest(flags: Array<string>, headers: string): void;
     convertHeaderObjectToCURL(): string;
 }
 export default CurlImpersonate;
