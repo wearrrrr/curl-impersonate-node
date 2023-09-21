@@ -59,6 +59,19 @@ export class CurlImpersonate {
             throw new Error("Invalid Method! Valid HTTP methods are " + this.validMethods);
         }
     }
+    setupBodyArgument(body) {
+        if (body !== undefined) {
+            try {
+                JSON.stringify(body);
+            }
+            catch {
+                return body; // Assume that content type is anything except www-form-urlencoded or form-data, not quite sure if graphql is supported.
+            }
+        }
+        else {
+            throw new Error("Body is undefined in a post request! Current body is " + this.options.body);
+        }
+    }
     setProperBinary() {
         switch (process.platform) {
             case "linux":
@@ -82,17 +95,80 @@ export class CurlImpersonate {
     }
     async getRequest(flags, headers) {
         // GET REQUEST
+        flags.push("-v");
         let binpath = path.join(__dirname, '..', 'bin', this.binary);
         let args = `${flags.join(' ')} ${headers} ${this.url}`;
         const result = proc.spawnSync(`${binpath} ${args}`, { shell: true });
-        return result.stdout.toString(); // Convert the stdout buffer to a string and return it
+        let response = result.stdout.toString();
+        let cleanedPayload = response.replace(/\s+\+\s+/g, '');
+        let verbose = result.stderr.toString();
+        // Define regular expressions to extract information
+        const ipAddressRegex = /Trying (\S+):(\d+)/;
+        const httpStatusRegex = /< HTTP\/2 (\d+) ([^\n]+)/;
+        // Extract IP address and port
+        const ipAddressMatch = verbose.match(ipAddressRegex);
+        let port;
+        let ipAddress;
+        if (ipAddressMatch) {
+            ipAddress = ipAddressMatch[1];
+            port = parseInt(ipAddressMatch[2]);
+        }
+        // Extract HTTP status code and headers
+        const httpStatusMatch = verbose.match(httpStatusRegex);
+        let statusCode;
+        if (httpStatusMatch) {
+            statusCode = parseInt(httpStatusMatch[1]);
+            const statusText = httpStatusMatch[2];
+        }
+        let returnObject = {
+            ipAddress: ipAddress,
+            port: port,
+            statusCode: statusCode,
+            response: cleanedPayload,
+            responseHeaders: {},
+            requestHeaders: this.options.headers,
+            verboseStatus: this.options.verbose ? true : false
+        };
+        return returnObject;
     }
     async postRequest(flags, headers, body) {
         // POST REQUEST
+        flags.push("-v");
+        let curlBody = this.setupBodyArgument(body);
         let binpath = path.join(__dirname, '..', 'bin', this.binary);
-        let args = `${flags.join(' ')} ${headers} -d '${JSON.stringify(body)}' ${this.url}`;
-        const result = proc.spawnSync(`${binpath} ${args}`, { shell: true });
-        return result.stdout.toString(); // Convert the stdout buffer to a string and return it
+        let args = `${flags.join(' ')} ${headers} ${this.url}`;
+        const result = proc.spawnSync(`${binpath} ${args} -d ${curlBody}`, { shell: true });
+        let response = result.stdout.toString();
+        let cleanedPayload = response.replace(/\s+\+\s+/g, '');
+        let verbose = result.stderr.toString();
+        // Define regular expressions to extract information
+        const ipAddressRegex = /Trying (\S+):(\d+)/;
+        const httpStatusRegex = /< HTTP\/2 (\d+) ([^\n]+)/;
+        // Extract IP address and port
+        const ipAddressMatch = verbose.match(ipAddressRegex);
+        let port;
+        let ipAddress;
+        if (ipAddressMatch) {
+            ipAddress = ipAddressMatch[1];
+            port = parseInt(ipAddressMatch[2]);
+        }
+        // Extract HTTP status code and headers
+        const httpStatusMatch = verbose.match(httpStatusRegex);
+        let statusCode;
+        if (httpStatusMatch) {
+            statusCode = parseInt(httpStatusMatch[1]);
+            const statusText = httpStatusMatch[2];
+        }
+        let returnObject = {
+            ipAddress: ipAddress,
+            port: port,
+            statusCode: statusCode,
+            response: cleanedPayload,
+            responseHeaders: {},
+            requestHeaders: this.options.headers,
+            verboseStatus: this.options.verbose ? true : false
+        };
+        return returnObject;
     }
     convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');
