@@ -1,11 +1,12 @@
 {
   "name": "node-curl-impersonate",
-  "version": "1.0.7",
+  "version": "1.2.6",
   "description": "A wrapper around cURL-impersonate, a binary which can be used to bypass TLS fingerprinting.",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "jest"
   },
   "keywords": [
     "web-scraping",
@@ -16,6 +17,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.5.9"
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.5",
+    "@types/node": "^20.5.9",
+    "ts-jest": "^29.1.1"
+  },
+  "dependencies": {
+    "jest": "^29.7.0",
+    "ts-node": "^10.9.1"
   }
 }

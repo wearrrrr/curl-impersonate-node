@@ -40,6 +40,13 @@ export interface CurlImpersonate {
     binary: string;
 }
 
+export interface CurlResponse {
+    statusCode: number;
+    response: string;
+    responseHeaders: Object;
+    requestHeaders: Object;
+}
+
 export class CurlImpersonate {
     constructor(url: string, options: CurlImpersonateOptions) {
         this.url = url
@@ -49,28 +56,30 @@ export class CurlImpersonate {
     }
 
     makeRequest() {
-        if (this.validateOptions(this.options)) {
-            this.setProperBinary()
-            let headers = this.convertHeaderObjectToCURL();
-            let flags = this.options.flags || [];
-            if (this.options.followRedirects) {
-                flags.push("-L")
+        return new Promise((resolve, reject) => {
+            if (this.validateOptions(this.options)) {
+                this.setProperBinary();
+                let headers = this.convertHeaderObjectToCURL();
+                let flags = this.options.flags || [];
+
+                if (this.options.method == "GET") {
+                    this.getRequest(flags, headers)
+                        .then(response => resolve(response))
+                        .catch(error => reject(error));
+                } else if (this.options.method == "POST") {
+                    this.postRequest(flags, headers, this.options.body)
+                        .then(response => resolve(response))
+                        .catch(error => reject(error));
+                } else {
+                    // Handle other HTTP methods if needed
+                    reject(new Error("Unsupported HTTP method"));
+                }
+            } else {
+                reject(new Error("Invalid options"));
             }
-            if (this.options.timeout) {
-                flags.push(`--connect-timeout ${this.options.timeout / 1000}`)
-            }
-            switch (this.options.method.toUpperCase()) {
-                case "GET":
-                    this.getRequest(flags, headers);
-                    break;
-                case "POST":
-                    this.postRequest(flags, headers);
-                    break;
-                default:
-                    throw new Error("Invalid Method! Valid HTTP methods are " + this.validMethods)
-            }
-        } 
+        });
     }
+
     validateOptions(options: CurlImpersonateOptions) {
         if (this.validMethods.includes(options.method.toUpperCase())) {
             if (options.body !== undefined && options.method == "GET") {
@@ -106,18 +115,22 @@ export class CurlImpersonate {
             throw new Error(`Unsupported Platform! ${process.platform}`)
         }
     }
-    getRequest(flags: Array<string>, headers: string) {
+    async getRequest(flags: Array<string>, headers: string) {
         // GET REQUEST
-        let binpath = path.join(__dirname, "..", "bin", this.binary)
-        let args = `${flags.join(" ")} ${headers} ${this.url}`
-        proc.spawn(`${binpath} ${args}`, { shell: true, stdio: "inherit" })
+        let binpath = path.join(__dirname, '..', 'bin', this.binary);
+        let args = `${flags.join(' ')} ${headers} ${this.url}`;
+        const result = proc.spawnSync(`${binpath} ${args}`, { shell: true });
+        return result.stdout.toString(); // Convert the stdout buffer to a string and return it
     }
-    postRequest(flags: Array<string>, headers: string) {
+
+    async postRequest(flags: Array<string>, headers: string, body: Object | undefined) {
         // POST REQUEST
-        let binpath = path.join(__dirname, "..", "bin", this.binary)
-        let args = `${flags.join(" ")} ${headers} -d '${JSON.stringify(this.options.body)}' ${this.url}`
-        proc.spawn(`${binpath} ${args}`, { shell: true, stdio: "inherit" })
+        let binpath = path.join(__dirname, '..', 'bin', this.binary);
+        let args = `${flags.join(' ')} ${headers} -d '${JSON.stringify(body)}' ${this.url}`;
+        const result = proc.spawnSync(`${binpath} ${args}`, { shell: true });
+        return result.stdout.toString(); // Convert the stdout buffer to a string and return it
     }
+
     convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');
     }
