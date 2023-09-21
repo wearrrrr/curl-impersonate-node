@@ -102,30 +102,14 @@ export class CurlImpersonate {
         let response = result.stdout.toString();
         let cleanedPayload = response.replace(/\s+\+\s+/g, '');
         let verbose = result.stderr.toString();
-        // Define regular expressions to extract information
-        const ipAddressRegex = /Trying (\S+):(\d+)/;
-        const httpStatusRegex = /< HTTP\/2 (\d+) ([^\n]+)/;
-        // Extract IP address and port
-        const ipAddressMatch = verbose.match(ipAddressRegex);
-        let port;
-        let ipAddress;
-        if (ipAddressMatch) {
-            ipAddress = ipAddressMatch[1];
-            port = parseInt(ipAddressMatch[2]);
-        }
-        // Extract HTTP status code and headers
-        const httpStatusMatch = verbose.match(httpStatusRegex);
-        let statusCode;
-        if (httpStatusMatch) {
-            statusCode = parseInt(httpStatusMatch[1]);
-            const statusText = httpStatusMatch[2];
-        }
+        let requestData = this.extractRequestData(verbose);
+        let respHeaders = this.extractResponseHeaders(verbose);
         let returnObject = {
-            ipAddress: ipAddress,
-            port: port,
-            statusCode: statusCode,
+            ipAddress: requestData.ipAddress,
+            port: requestData.port,
+            statusCode: requestData.statusCode,
             response: cleanedPayload,
-            responseHeaders: {},
+            responseHeaders: respHeaders,
             requestHeaders: this.options.headers,
             verboseStatus: this.options.verbose ? true : false
         };
@@ -141,6 +125,20 @@ export class CurlImpersonate {
         let response = result.stdout.toString();
         let cleanedPayload = response.replace(/\s+\+\s+/g, '');
         let verbose = result.stderr.toString();
+        let requestData = this.extractRequestData(verbose);
+        let respHeaders = this.extractResponseHeaders(verbose);
+        let returnObject = {
+            ipAddress: requestData.ipAddress,
+            port: requestData.port,
+            statusCode: requestData.statusCode,
+            response: cleanedPayload,
+            responseHeaders: respHeaders,
+            requestHeaders: this.options.headers,
+            verboseStatus: this.options.verbose ? true : false
+        };
+        return returnObject;
+    }
+    extractRequestData(verbose) {
         // Define regular expressions to extract information
         const ipAddressRegex = /Trying (\S+):(\d+)/;
         const httpStatusRegex = /< HTTP\/2 (\d+) ([^\n]+)/;
@@ -157,18 +155,29 @@ export class CurlImpersonate {
         let statusCode;
         if (httpStatusMatch) {
             statusCode = parseInt(httpStatusMatch[1]);
-            const statusText = httpStatusMatch[2];
         }
-        let returnObject = {
+        return {
             ipAddress: ipAddress,
             port: port,
             statusCode: statusCode,
-            response: cleanedPayload,
-            responseHeaders: {},
-            requestHeaders: this.options.headers,
-            verboseStatus: this.options.verbose ? true : false
         };
-        return returnObject;
+    }
+    extractResponseHeaders(verbose) {
+        const httpResponseRegex = /< ([^\n]+)/g;
+        let responseHeaders = {};
+        const match = verbose.match(httpResponseRegex);
+        if (match) {
+            match.forEach((header) => {
+                const headerWithoutPrefix = header.substring(2); // Remove the first two characters
+                const headerParts = headerWithoutPrefix.split(': ');
+                if (headerParts.length > 1) {
+                    const headerName = headerParts[0].trim(); // Trim any leading/trailing spaces
+                    const headerValue = headerParts[1].trim(); // Trim any leading/trailing spaces
+                    responseHeaders[headerName] = headerValue;
+                }
+            });
+        }
+        return responseHeaders;
     }
     convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');

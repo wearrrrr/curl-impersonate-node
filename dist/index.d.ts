@@ -30,6 +30,14 @@ export declare class CurlImpersonate {
     setProperBinary(): void;
     getRequest(flags: Array<string>, headers: string): Promise<CurlResponse>;
     postRequest(flags: Array<string>, headers: string, body: Object | undefined): Promise<CurlResponse>;
+    extractRequestData(verbose: string): {
+        ipAddress: string | undefined;
+        port: number | undefined;
+        statusCode: number | undefined;
+    };
+    extractResponseHeaders(verbose: string): {
+        [key: string]: string;
+    };
     convertHeaderObjectToCURL(): string;
 }
 export default CurlImpersonate;

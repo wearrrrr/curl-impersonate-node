@@ -9,6 +9,7 @@ test("Returns a successful GET reponse", async () => {
         },
     });
     let req = await ci.makeRequest()
+    console.log(req)
     expect(notEqual(req, null))
 })
 
