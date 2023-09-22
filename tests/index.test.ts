@@ -1,5 +1,6 @@
+
 import { equal, notEqual } from "assert";
-import CurlImpersonate from "../src/index";
+import CurlImpersonate from "../dist/index";
 
 test("Returns a successful GET reponse on TLS Fingerprinting protected URL", async () => {
     let ci = new CurlImpersonate("https://api.amiami.com/api/v1.0/items?pagemax=20&lang=eng&mcode=&ransu=&age_confirm=&s_keywords=touhou%20plush", {
@@ -22,7 +23,6 @@ test("Returns a successful GET reponse on TLS Fingerprinting protected URL", asy
         },
     });
     let req = await ci.makeRequest()
-    console.log(req)
     expect(equal(req.statusCode, 200))
 })
 
