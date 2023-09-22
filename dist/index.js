@@ -184,4 +184,5 @@ export class CurlImpersonate {
     }
 }
 export default CurlImpersonate;
+module.exports = CurlImpersonate;
 //# sourceMappingURL=index.js.map
