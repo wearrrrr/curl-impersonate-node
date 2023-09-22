@@ -34,6 +34,10 @@ exports.CurlImpersonate = void 0;
 const proc = __importStar(require("child_process"));
 const path = __importStar(require("path"));
 class CurlImpersonate {
+    url;
+    options;
+    validMethods;
+    binary;
     constructor(url, options) {
         this.url = url;
         this.options = options;

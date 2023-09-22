@@ -1,4 +1,3 @@
-
 import { equal, notEqual } from "assert";
 import CurlImpersonate from "../dist/index";
 
@@ -39,5 +38,5 @@ test("Returns a successful POST reponse", async () => {
         }
     });
     let req = await ci.makeRequest()
-    expect(notEqual(req, null))
+    expect(equal(req.statusCode, 200))
 })

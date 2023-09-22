@@ -24,34 +24,15 @@ CurlImpersonateOptions:
 
 */
 
-interface CurlImpersonateOptions {
-    method: string;
-    headers: Object;
-    flags?: Array<string>;
-    body?: Object;
-    timeout?: number | 10000;
-    followRedirects?: boolean | true;
-    verbose?: boolean | false;
-}
+import { CurlImpersonateOptions, CurlResponse } from "./interfaces";
 
-export interface CurlImpersonate {
+
+export class CurlImpersonate {
     url: string;
     options: CurlImpersonateOptions;
     validMethods: Array<String>
     binary: string;
-}
-
-export interface CurlResponse {
-    ipAddress: string | undefined,
-    port: number | undefined,
-    statusCode: number | undefined;
-    response: string;
-    responseHeaders: Object;
-    requestHeaders: Object;
-    verboseStatus: boolean | undefined,
-}
-
-export class CurlImpersonate {
+    
     constructor(url: string, options: CurlImpersonateOptions) {
         this.url = url
         this.options = options
