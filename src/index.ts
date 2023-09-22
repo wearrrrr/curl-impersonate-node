@@ -235,4 +235,3 @@ export class CurlImpersonate {
 }   
 
 export default CurlImpersonate
-module.exports = CurlImpersonate
