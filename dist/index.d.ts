@@ -4,7 +4,9 @@ export declare class CurlImpersonate {
     options: CurlImpersonateOptions;
     validMethods: Array<String>;
     binary: string;
+    impersonatePresets: String[];
     constructor(url: string, options: CurlImpersonateOptions);
+    checkIfPresetAndMerge(): void;
     makeRequest(): Promise<CurlResponse>;
     validateOptions(options: CurlImpersonateOptions): boolean;
     setupBodyArgument(body: Object | undefined): Object | undefined;

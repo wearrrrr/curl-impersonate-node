@@ -25,6 +25,7 @@ CurlImpersonateOptions:
 */
 
 import { CurlImpersonateOptions, CurlResponse } from "./interfaces";
+import { presets } from "./presets";
 
 
 export class CurlImpersonate {
@@ -32,18 +33,30 @@ export class CurlImpersonate {
     options: CurlImpersonateOptions;
     validMethods: Array<String>
     binary: string;
+    impersonatePresets: String[];
     
     constructor(url: string, options: CurlImpersonateOptions) {
         this.url = url
         this.options = options
         this.validMethods = ["GET", "POST"]
         this.binary = ""
+        this.impersonatePresets = ["chrome-110", "chrome-116", "firefox-109", "firefox-117"]
+    }
+
+    checkIfPresetAndMerge() {
+        if (this.options.impersonate === undefined) return;
+        if (this.impersonatePresets.includes(this.options.impersonate)) {
+            let preset = presets[this.options.impersonate]
+            this.options.headers = Object.assign(this.options.headers, preset.headers);
+            this.options.flags = this.options.flags ? this.options.flags.concat(preset.flags) : preset.flags
+        }
     }
 
     makeRequest(): Promise<CurlResponse> {
         return new Promise((resolve, reject) => {
             if (this.validateOptions(this.options)) {
                 this.setProperBinary();
+                this.checkIfPresetAndMerge();
                 let headers = this.convertHeaderObjectToCURL();
                 let flags = this.options.flags || [];
                 if (this.options.method == "GET") {
@@ -92,19 +105,33 @@ export class CurlImpersonate {
         }
     }
     setProperBinary() {
+        let isFF = this.options.impersonate == "firefox-109" || this.options.impersonate == "firefox-117"
         switch (process.platform) {
         case "linux":
             if (process.arch == "x64") {
-                this.binary = "curl-impersonate-chrome-linux-x86";
+                if (isFF) {
+                    this.binary = "curl-impersonate-firefox-linux-x86"
+                } else {
+                    this.binary = "curl-impersonate-chrome-linux-x86";
+                }
+                
                 break;
             } else if (process.arch == "arm") {
-                this.binary = "curl-impersonate-chrome-linux-aarch64";
+                if (isFF) {
+                    this.binary = "curl-impersonate-firefox-linux-aarch64"
+                } else {
+                    this.binary = "curl-impersonate-chrome-linux-aarch64";
+                }
                 break;
             } else {
                 throw new Error(`Unsupported architecture: ${process.arch}`);
             }
         case "darwin":
-            this.binary = "curl-impersonate-chrome-darwin-x86";
+            if (isFF) {
+                this.binary = "curl-impersonate-firefox-darwin-x86"
+            } else {
+                this.binary = "curl-impersonate-chrome-darwin-x86";
+            }
             break;
         default:
             throw new Error(`Unsupported Platform! ${process.platform}`)
@@ -114,10 +141,16 @@ export class CurlImpersonate {
         // GET REQUEST
         flags.push("-v")
         let binpath = path.join(__dirname, '..', 'bin', this.binary);
-        let args = `${flags.join(' ')} ${headers} ${this.url}`;
+        let args = `${flags.join(' ')} ${headers} '${this.url}'`;
+        if (this.options.verbose) {
+            console.log(new Object({
+                binpath: binpath,
+                args: args,
+                url: this.url,
+            }))
+        }
         const result = proc.spawnSync(`${binpath} ${args}`, { shell: true });
         let response = result.stdout.toString();
-        let cleanedPayload = response.replace(/\s+\+\s+/g, '');
         let verbose = result.stderr.toString();
 
         let requestData = this.extractRequestData(verbose)
@@ -128,11 +161,12 @@ export class CurlImpersonate {
             ipAddress: requestData.ipAddress,
             port: requestData.port,
             statusCode: requestData.statusCode,
-            response: cleanedPayload,
+            response: response,
             responseHeaders: respHeaders,
             requestHeaders: this.options.headers,
             verboseStatus: this.options.verbose ? true : false
         }
+        
         return returnObject;
     }
 
@@ -160,7 +194,7 @@ export class CurlImpersonate {
             response: cleanedPayload,
             responseHeaders: respHeaders,
             requestHeaders: this.options.headers,
-            verboseStatus: this.options.verbose ? true : false
+            verboseStatus: this.options.verbose,
         }
         return returnObject;
     }
