@@ -56,7 +56,9 @@ class CurlImpersonate {
             this.options.flags = this.options.flags ? this.options.flags.concat(preset.flags) : preset.flags;
         }
     }
-    makeRequest() {
+    makeRequest(url) {
+        if (url !== undefined)
+            this.url = url;
         return new Promise((resolve, reject) => {
             if (this.validateOptions(this.options)) {
                 this.setProperBinary();
@@ -82,6 +84,9 @@ class CurlImpersonate {
                 reject(new Error("Invalid options"));
             }
         });
+    }
+    setNewURL(url) {
+        this.url = url;
     }
     validateOptions(options) {
         if (this.validMethods.includes(options.method.toUpperCase())) {

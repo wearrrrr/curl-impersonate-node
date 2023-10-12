@@ -2,7 +2,7 @@ import { equal, notEqual } from "assert";
 import CurlImpersonate from "../dist/index";
 
 test("Returns a successful GET reponse on TLS Fingerprinting protected URL", async () => {
-    let ci = new CurlImpersonate("https://api.amiami.com/api/v1.0/items?s_keywords=touhou%20plush&pagecnt=1&pagemax=30&lang=eng", {
+    let ci = new CurlImpersonate("", {
         method: "GET",
         headers: {
             "x-user-key": "amiami_dev"
@@ -10,7 +10,7 @@ test("Returns a successful GET reponse on TLS Fingerprinting protected URL", asy
         impersonate: "firefox-109",
         verbose: true,
     });
-    let req = await ci.makeRequest();
+    let req = await ci.makeRequest("https://api.amiami.com/api/v1.0/items?s_keywords=touhou%20plush&pagecnt=2&pagemax=30&lang=eng");
     expect(equal(req.statusCode, 200))
 })
 

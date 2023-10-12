@@ -31,7 +31,7 @@ import { presets } from "./presets";
 export class CurlImpersonate {
     url: string;
     options: CurlImpersonateOptions;
-    validMethods: Array<String>
+    validMethods: Array<String>;
     binary: string;
     impersonatePresets: String[];
     
@@ -43,7 +43,7 @@ export class CurlImpersonate {
         this.impersonatePresets = ["chrome-110", "chrome-116", "firefox-109", "firefox-117"]
     }
 
-    checkIfPresetAndMerge() {
+    private checkIfPresetAndMerge() {
         if (this.options.impersonate === undefined) return;
         if (this.impersonatePresets.includes(this.options.impersonate)) {
             let preset = presets[this.options.impersonate]
@@ -52,7 +52,8 @@ export class CurlImpersonate {
         }
     }
 
-    makeRequest(): Promise<CurlResponse> {
+    makeRequest(url?: string): Promise<CurlResponse> {
+        if (url !== undefined) this.url = url;
         return new Promise((resolve, reject) => {
             if (this.validateOptions(this.options)) {
                 this.setProperBinary();
@@ -77,6 +78,10 @@ export class CurlImpersonate {
         });
     }
 
+    setNewURL(url: string) {
+        this.url = url;
+    }
+
     validateOptions(options: CurlImpersonateOptions) {
         if (this.validMethods.includes(options.method.toUpperCase())) {
             if (options.body !== undefined && options.method == "GET") {
@@ -93,7 +98,8 @@ export class CurlImpersonate {
             throw new Error("Invalid Method! Valid HTTP methods are " + this.validMethods)
         }
     }
-    setupBodyArgument(body: Object | undefined) {
+
+    private setupBodyArgument(body: Object | undefined) {
         if (body !== undefined) {
             try {
                 JSON.stringify(body)
@@ -104,7 +110,7 @@ export class CurlImpersonate {
             throw new Error("Body is undefined in a post request! Current body is " + this.options.body)
         }
     }
-    setProperBinary() {
+    private setProperBinary() {
         let isFF = this.options.impersonate == "firefox-109" || this.options.impersonate == "firefox-117"
         switch (process.platform) {
         case "linux":
@@ -137,7 +143,7 @@ export class CurlImpersonate {
             throw new Error(`Unsupported Platform! ${process.platform}`)
         }
     }
-    async getRequest(flags: Array<string>, headers: string) {
+    private async getRequest(flags: Array<string>, headers: string) {
         // GET REQUEST
         flags.push("-v")
         let binpath = path.join(__dirname, '..', 'bin', this.binary);
@@ -170,7 +176,7 @@ export class CurlImpersonate {
         return returnObject;
     }
 
-    async postRequest(flags: Array<string>, headers: string, body: Object | undefined) {
+    private async postRequest(flags: Array<string>, headers: string, body: Object | undefined) {
         // POST REQUEST
         flags.push("-v")
         let curlBody = this.setupBodyArgument(body)
@@ -199,7 +205,7 @@ export class CurlImpersonate {
         return returnObject;
     }
 
-    extractRequestData(verbose: string) {
+    private extractRequestData(verbose: string) {
         // Define regular expressions to extract information
         const ipAddressRegex = /Trying (\S+):(\d+)/;
         const httpStatusRegex = /< HTTP\/2 (\d+) ([^\n]+)/;
@@ -226,7 +232,7 @@ export class CurlImpersonate {
         }
     }
 
-    extractResponseHeaders(verbose: string) {
+    private extractResponseHeaders(verbose: string) {
         const httpResponseRegex = /< ([^\n]+)/g;
         let responseHeaders: { [key: string]: string } = {};
         const match = verbose.match(httpResponseRegex);
@@ -244,7 +250,7 @@ export class CurlImpersonate {
         return responseHeaders;
     }
 
-    convertHeaderObjectToCURL() {
+    private convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');
     }
 }   
