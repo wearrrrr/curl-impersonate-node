@@ -34,7 +34,7 @@ export class CurlImpersonate {
     validMethods: Array<String>;
     binary: string;
     impersonatePresets: String[];
-    
+
     constructor(url: string, options: CurlImpersonateOptions) {
         this.url = url
         this.options = options
@@ -44,7 +44,9 @@ export class CurlImpersonate {
     }
 
     private checkIfPresetAndMerge() {
-        if (this.options.impersonate === undefined) return;
+        if (this.options.impersonate === undefined) {
+            return
+        }
         if (this.impersonatePresets.includes(this.options.impersonate)) {
             let preset = presets[this.options.impersonate]
             this.options.headers = Object.assign(this.options.headers, preset.headers);
@@ -53,13 +55,15 @@ export class CurlImpersonate {
     }
 
     makeRequest(url?: string): Promise<CurlResponse> {
-        if (url !== undefined) this.url = url;
+        if (url !== undefined) {
+            this.url = url
+        };
         return new Promise((resolve, reject) => {
             if (this.validateOptions(this.options)) {
                 this.setProperBinary();
                 this.checkIfPresetAndMerge();
                 let headers = this.convertHeaderObjectToCURL();
-                let flags = this.options.flags || [];
+                let flags = this.options.flags ?? [];
                 if (this.options.method == "GET") {
                     this.getRequest(flags, headers)
                         .then(response => resolve(response))
@@ -113,40 +117,43 @@ export class CurlImpersonate {
     private setProperBinary() {
         let isFF = this.options.impersonate == "firefox-109" || this.options.impersonate == "firefox-117"
         switch (process.platform) {
-        case "linux":
-            if (process.arch == "x64") {
-                if (isFF) {
-                    this.binary = "curl-impersonate-firefox-linux-x86"
+            case "linux":
+                if (process.arch == "x64") {
+                    if (isFF) {
+                        this.binary = "curl-impersonate-firefox-linux-x86"
+                    } else {
+                        this.binary = "curl-impersonate-chrome-linux-x86";
+                    }
+
+                    break;
+                } else if (process.arch == "arm") {
+                    if (isFF) {
+                        this.binary = "curl-impersonate-firefox-linux-aarch64"
+                    } else {
+                        this.binary = "curl-impersonate-chrome-linux-aarch64";
+                    }
+                    break;
                 } else {
-                    this.binary = "curl-impersonate-chrome-linux-x86";
+                    throw new Error(`Unsupported architecture: ${process.arch}`);
                 }
-                
-                break;
-            } else if (process.arch == "arm") {
+            case "darwin":
                 if (isFF) {
-                    this.binary = "curl-impersonate-firefox-linux-aarch64"
+                    this.binary = "curl-impersonate-firefox-darwin-x86"
                 } else {
-                    this.binary = "curl-impersonate-chrome-linux-aarch64";
+                    this.binary = "curl-impersonate-chrome-darwin-x86";
                 }
                 break;
-            } else {
-                throw new Error(`Unsupported architecture: ${process.arch}`);
-            }
-        case "darwin":
-            if (isFF) {
-                this.binary = "curl-impersonate-firefox-darwin-x86"
-            } else {
-                this.binary = "curl-impersonate-chrome-darwin-x86";
-            }
-            break;
-        default:
-            throw new Error(`Unsupported Platform! ${process.platform}`)
+            case "win32":
+                this.binary = "curl_chrome116.bat";
+                break;
+            default:
+                throw new Error(`Unsupported Platform! ${process.platform}`)
         }
     }
-    private async getRequest(flags: Array<string>, headers: string) {
+    private async getRequest(flags: Array<string>, headers: string): Promise<CurlResponse> {
         // GET REQUEST
         flags.push("-v")
-        let binpath = path.join(__dirname, '..', 'bin', this.binary);
+        let binpath = path.join( this.binary);
         let args = `${flags.join(' ')} ${headers} '${this.url}'`;
         if (this.options.verbose) {
             console.log(new Object({
@@ -155,15 +162,14 @@ export class CurlImpersonate {
                 url: this.url,
             }))
         }
-        const result = proc.spawnSync(`${binpath} ${args}`, { shell: true });
-        let response = result.stdout.toString();
-        let verbose = result.stderr.toString();
+        const result = proc.spawnSync(`${binpath} ${args}`, { shell: true, cwd: path.join(__dirname, '..', 'bin', 'curl-impersonate-win') });
+        const response = result.stdout.toString();
+        const verbose = result.stderr.toString();
 
-        let requestData = this.extractRequestData(verbose)
-        let respHeaders = this.extractResponseHeaders(verbose)
+        const requestData = this.extractRequestData(verbose)
+        const respHeaders = this.extractResponseHeaders(verbose)
 
-
-        let returnObject: CurlResponse = {
+        return {
             ipAddress: requestData.ipAddress,
             port: requestData.port,
             statusCode: requestData.statusCode,
@@ -171,9 +177,7 @@ export class CurlImpersonate {
             responseHeaders: respHeaders,
             requestHeaders: this.options.headers,
             verboseStatus: this.options.verbose ? true : false
-        }
-        
-        return returnObject;
+        };
     }
 
     private async postRequest(flags: Array<string>, headers: string, body: Object | undefined) {
@@ -190,7 +194,7 @@ export class CurlImpersonate {
 
         let requestData = this.extractRequestData(verbose)
         let respHeaders = this.extractResponseHeaders(verbose)
-        
+
 
 
         let returnObject: CurlResponse = {
@@ -214,9 +218,9 @@ export class CurlImpersonate {
         const ipAddressMatch = verbose.match(ipAddressRegex);
         let port;
         let ipAddress;
-            if (ipAddressMatch) {
-                ipAddress = ipAddressMatch[1];
-                port = parseInt(ipAddressMatch[2])
+        if (ipAddressMatch) {
+            ipAddress = ipAddressMatch[1];
+            port = parseInt(ipAddressMatch[2])
         }
 
         // Extract HTTP status code and headers
@@ -234,18 +238,18 @@ export class CurlImpersonate {
 
     private extractResponseHeaders(verbose: string) {
         const httpResponseRegex = /< ([^\n]+)/g;
-        let responseHeaders: { [key: string]: string } = {};
+        const responseHeaders: { [key: string]: string } = {};
         const match = verbose.match(httpResponseRegex);
         if (match) {
-          match.forEach((header: string) => {
-            const headerWithoutPrefix = header.substring(2); // Remove the first two characters
-            const headerParts = headerWithoutPrefix.split(': ');
-            if (headerParts.length > 1) {
-              const headerName = headerParts[0].trim(); // Trim any leading/trailing spaces
-              const headerValue = headerParts[1].trim(); // Trim any leading/trailing spaces
-              responseHeaders[headerName] = headerValue;
-            }
-          });
+            match.forEach((header: string) => {
+                const headerWithoutPrefix = header.substring(2); // Remove the first two characters
+                const headerParts = headerWithoutPrefix.split(': ');
+                if (headerParts.length > 1) {
+                    const headerName = headerParts[0].trim(); // Trim any leading/trailing spaces
+                    const headerValue = headerParts[1].trim(); // Trim any leading/trailing spaces
+                    responseHeaders[headerName] = headerValue;
+                }
+            });
         }
         return responseHeaders;
     }
@@ -253,6 +257,6 @@ export class CurlImpersonate {
     private convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers).map(([key, value]) => `-H '${key}: ${value}'`).join(' ');
     }
-}   
+}
 
 export default CurlImpersonate

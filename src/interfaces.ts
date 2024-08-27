@@ -1,4 +1,4 @@
-type validBrowsers = ["chrome-110", "chrome-116", "firefox-109", "firefox-117"];
+type ValidBrowsers = ["chrome-110", "chrome-116", "firefox-109", "firefox-117"];
 
 interface CurlImpersonateOptions {
     method: string;
@@ -8,7 +8,7 @@ interface CurlImpersonateOptions {
     timeout?: number | 10000;
     followRedirects?: boolean | true;
     verbose?: boolean | false;
-    impersonate?: validBrowsers[number];
+    impersonate?: ValidBrowsers[number];
 }
 
 interface CurlResponse {
