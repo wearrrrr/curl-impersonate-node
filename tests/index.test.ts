@@ -12,7 +12,7 @@ test("Returns a successful GET reponse on TLS Fingerprinting protected URL", asy
     });
     let req = await ci.makeRequest("https://api.amiami.com/api/v1.0/items?s_keywords=touhou%20plush&pagecnt=2&pagemax=30&lang=eng");
     console.log(req)
-    expect(equal(req.statusCode, 200))
+    expect(equal(req.status, 200))
 })
 
 test("Returns a successful POST reponse", async () => {
@@ -28,5 +28,5 @@ test("Returns a successful POST reponse", async () => {
         }
     });
     let req = await ci.makeRequest()
-    expect(equal(req.statusCode, 200))
+    expect(equal(req.status, 200))
 })

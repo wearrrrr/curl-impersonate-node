@@ -6,7 +6,7 @@
 
 */
 
-import * as proc from "child_process";
+import { exec } from "child_process";
 import * as path from 'path';
 
 
@@ -24,22 +24,26 @@ CurlImpersonateOptions:
 
 */
 
-import { CurlImpersonateOptions, CurlResponse } from "./interfaces";
+import { CurlImpersonateOptions, CurlResponse, ValidBrowserType, ValidLinuxBrowsers } from "./interfaces";
 import { presets } from "./presets";
 
+export interface CurlImpersonateRequestOptions {
+    method?: string;
+    body?: unknown;
+    flags?: string[];
+    headers?: Record<string, string>;
+    browser?: ValidBrowserType;
+}
 
 export class CurlImpersonate {
-    url: string;
-    options: CurlImpersonateOptions;
-    validMethods: Array<String>;
+    static readonly VALID_METHODS: string[] = ["GET", "POST"];
     binary: string;
-    cwd?: string;
+    private cwd?: string;
     impersonatePresets: String[];
 
-    constructor(url: string, options: CurlImpersonateOptions) {
+    constructor(private url: string, private options: CurlImpersonateOptions) {
         this.url = url
         this.options = options
-        this.validMethods = ["GET", "POST"]
         this.binary = ""
         this.cwd = "";
         this.impersonatePresets = ["chrome-110", "chrome-116", "firefox-109", "firefox-117"]
@@ -64,13 +68,13 @@ export class CurlImpersonate {
             if (this.validateOptions(this.options)) {
                 this.setProperBinary();
                 this.checkIfPresetAndMerge();
-                let headers = this.convertHeaderObjectToCURL();
-                let flags = this.options.flags ?? [];
-                if (this.options.method == "GET") {
+                const headers = this.convertHeaderObjectToCURL();
+                const flags = this.options.flags ?? [];
+                if (this.options.method === "GET") {
                     this.getRequest(flags, headers)
                         .then(response => resolve(response))
                         .catch(error => reject(error));
-                } else if (this.options.method == "POST") {
+                } else if (this.options.method === "POST") {
                     this.postRequest(flags, headers, this.options.body)
                         .then(response => resolve(response))
                         .catch(error => reject(error));
@@ -89,19 +93,15 @@ export class CurlImpersonate {
     }
 
     validateOptions(options: CurlImpersonateOptions) {
-        if (this.validMethods.includes(options.method.toUpperCase())) {
-            if (options.body !== undefined && options.method == "GET") {
-                throw new Error("Method is GET with an HTTP payload!")
-            } else {
-                try {
-                    new URL(this.url)
-                    return true
-                } catch {
-                    throw new Error("URL is invalid! Must have http:// or https:// !")
-                }
+        if (CurlImpersonate.VALID_METHODS.includes(options.method.toUpperCase())) {
+            try {
+                new URL(this.url);
+                return true;
+            } catch {
+                throw new Error("URL is invalid! Must have http:// or https:// !")
             }
         } else {
-            throw new Error("Invalid Method! Valid HTTP methods are " + this.validMethods)
+            throw new Error("Invalid Method! Valid HTTP methods are " + CurlImpersonate.VALID_METHODS.join(", "))
         }
     }
 
@@ -116,6 +116,7 @@ export class CurlImpersonate {
             throw new Error("Body is undefined in a post request! Current body is " + this.options.body)
         }
     }
+
     private setProperBinary() {
         let isFF = this.options.impersonate == "firefox-109" || this.options.impersonate == "firefox-117"
         switch (process.platform) {
@@ -148,26 +149,26 @@ export class CurlImpersonate {
             case "win32":
                 this.binary = "curl-impersonate-win/curl_chrome116.bat";
                 this.cwd = path.join(__dirname, "..", "bin/curl-impersonate-win");
-                console.log(this.cwd)
                 break;
             default:
                 throw new Error(`Unsupported Platform! ${process.platform}`)
         }
     }
+
     private async getRequest(flags: Array<string>, headers: string): Promise<CurlResponse> {
         // GET REQUEST
+        flags.push("-v")
+        const binpath = path.join(__dirname, '..', 'bin', this.binary);
+        const args = `${flags.join(' ')} ${headers} "${this.url}"`;
+        if (this.options.verbose) {
+            console.debug(new Object({
+                binpath: binpath,
+                args: args,
+                url: this.url,
+            }))
+        }
         return new Promise<CurlResponse>((resolve, reject) => {
-            flags.push("-v")
-            let binpath = path.join(__dirname, '..', 'bin', this.binary);
-            let args = `${flags.join(' ')} ${headers} "${this.url}"`;
-            if (this.options.verbose) {
-                console.debug(new Object({
-                    binpath: binpath,
-                    args: args,
-                    url: this.url,
-                }))
-            }
-            proc.exec(`${binpath} ${args}`, { cwd: this.cwd }, (err, stdout, stderr) => {
+            exec(`${binpath} ${args}`, { cwd: this.cwd }, (err, stdout, stderr) => {
                 if (err) {
                     reject(err);
                 }
@@ -196,7 +197,9 @@ export class CurlImpersonate {
         let binpath = path.join(__dirname, '..', 'bin', this.binary);
         let args = `${flags.join(' ')} ${headers} ${this.url}`;
 
-        const result = proc.spawnSync(`${binpath} ${args} -d ${curlBody}`, { shell: true });
+        const result = exec(`${binpath} ${args} -d ${curlBody}`, (error, stdout, stderr) => {
+
+        });
         let response = result.stdout.toString();
         let cleanedPayload = response.replace(/\s+\+\s+/g, '');
         let verbose = result.stderr.toString();
@@ -216,6 +219,11 @@ export class CurlImpersonate {
             verboseStatus: this.options.verbose,
         }
         return returnObject;
+    }
+
+    private async doRequest(flags: string[], headers: string, body?: object) {
+        const fullFlags = [...flags, "-v"];
+
     }
 
     private extractRequestData(verbose: string) {
@@ -266,6 +274,149 @@ export class CurlImpersonate {
     private convertHeaderObjectToCURL() {
         return Object.entries(this.options.headers ?? {}).map(([key, value]) => `-H "${key}: ${value}"`).join(' ');
     }
+}
+
+const validateBrowserSelection = (browser: string) => {
+    switch (process.platform) {
+        case "linux":
+            if (!ValidLinuxBrowsers.includes(browser)) {
+
+            }
+    }
+}
+
+interface BinaryResolution {
+    binary: string;
+    cwd?: string;
+}
+
+const binaryMap = {
+    "chrome-darwin-x86": ""
+}
+
+export const resolveBinary = (defaultBrowser?: string): BinaryResolution => {
+    const browser = defaultBrowser ?? "";
+    let isFF = this.options.impersonate == "firefox-109" || this.options.impersonate == "firefox-117"
+    switch (process.platform) {
+        case "linux":
+            if (process.arch == "x64") {
+                if (isFF) {
+                    return { binary: "curl-impersonate-firefox-linux-x86" }
+                } else {
+                    return { binary: "curl-impersonate-chrome-linux-x86" };
+                }
+            } else if (process.arch == "arm") {
+                if (isFF) {
+                    return { binary: "curl-impersonate-firefox-linux-aarch64" }
+                } else {
+                    return { binary: "curl-impersonate-chrome-linux-aarch64" };
+                }
+            } else {
+                throw new Error(`Unsupported architecture: ${process.arch}`);
+            }
+        case "darwin":
+            if (isFF) {
+                return { binary: "curl-impersonate-firefox-darwin-x86" }
+            } else {
+                return { binary: "curl-impersonate-chrome-darwin-x86" };
+            }
+        case "win32":
+            return {
+                binary: "curl-impersonate-win/curl_chrome116.bat",
+                cwd: path.join(__dirname, "..", "bin/curl-impersonate-win")
+            }
+        default:
+            throw new Error(`Unsupported Platform! ${process.platform}`)
+    }
+}
+
+const toHeader = (key: string, value: string) => {
+    return `-H "${key}: ${value}"`;
+}
+
+interface ParsedRequestData {
+    ip?: string;
+    port?: number;
+    status?: number;
+}
+
+const extractRequestData = (output: string): ParsedRequestData => {
+    // Define regular expressions to extract information
+    const ipAddressRegex = /Trying (\S+):(\d+)/;
+    const httpStatusRegex = /< HTTP\/2 (\d+) ([^\n]+)/;
+
+    // Extract IP address and port
+    const ipAddressMatch = output.match(ipAddressRegex);
+    let port;
+    let ip;
+    if (ipAddressMatch) {
+        ip = ipAddressMatch[1];
+        port = parseInt(ipAddressMatch[2])
+    }
+
+    // Extract HTTP status code and headers
+    const httpStatusMatch = output.match(httpStatusRegex);
+    let status;
+    if (httpStatusMatch) {
+        status = parseInt(httpStatusMatch[1]);
+    }
+    return { ip, port, status }
+}
+
+const extractResponseHeaders = (output: string): Record<string, string> => {
+    const httpResponseRegex = /< ([^\n]+)/g;
+    const headers: { [key: string]: string } = {};
+    const match = output.match(httpResponseRegex);
+    if (match) {
+        match.forEach((header: string) => {
+            const headerWithoutPrefix = header.substring(2); // Remove the first two characters
+            const headerParts = headerWithoutPrefix.split(': ');
+            if (headerParts.length > 1) {
+                const headerName = headerParts[0].trim(); // Trim any leading/trailing spaces
+                const headerValue = headerParts[1].trim(); // Trim any leading/trailing spaces
+                headers[headerName] = headerValue;
+            }
+        });
+    }
+    return headers;
+}
+
+export const doRequest = (url: string, options: CurlImpersonateRequestOptions) => {
+    const {
+        browser,
+        flags = [],
+        headers = {},
+        body,
+        method = "GET"
+    } = options;
+    const { binary, cwd } = resolveBinary(browser);
+    const binpath = path.join(__dirname, '..', 'bin', binary);
+    const args = [
+        ...flags,
+        headers,
+        `"${url}"`
+    ].join(" ");
+
+    return new Promise<CurlResponse>((resolve, reject) => {
+        exec(`${binpath} ${args}`, { cwd }, (err, stdout, stderr) => {
+            if (err) {
+                reject(err);
+            }
+            const response = stdout.toString();
+            const verbose = stderr.toString();
+            const { ip, port, status } = extractRequestData(verbose)
+            const respHeaders = extractResponseHeaders(verbose)
+
+            resolve({
+                ip,
+                port,
+                status,
+                response,
+                responseHeaders: respHeaders,
+                requestHeaders: headers,
+            });
+        });
+    })
 }
 
 export default CurlImpersonate
