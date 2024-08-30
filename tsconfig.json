@@ -9,7 +9,6 @@
     "rootDir": "./src",       // Source directory for TypeScript files
     "declaration": true,      // Generate type declaration files
     "declarationDir": "./dist", // Directory for declaration files
-    "sourceMap": true         // Generate source maps for debugging
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]

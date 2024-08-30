@@ -2,7 +2,7 @@ type ValidBrowsers = ["chrome-110", "chrome-116", "firefox-109", "firefox-117"];
 
 interface CurlImpersonateOptions {
     method: string;
-    headers: Object;
+    headers?: Object;
     flags?: Array<string>;
     body?: Object;
     timeout?: number | 10000;
@@ -17,7 +17,7 @@ interface CurlResponse {
     statusCode: number | undefined;
     response: string;
     responseHeaders: Object;
-    requestHeaders: Object;
+    requestHeaders?: Object;
     verboseStatus: boolean | undefined,
 }
 

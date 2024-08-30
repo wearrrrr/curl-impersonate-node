@@ -1,5 +1,5 @@
 import { equal, notEqual } from "assert";
-import CurlImpersonate from "../dist/index";
+import CurlImpersonate from "../src";
 
 test("Returns a successful GET reponse on TLS Fingerprinting protected URL", async () => {
     let ci = new CurlImpersonate("", {
