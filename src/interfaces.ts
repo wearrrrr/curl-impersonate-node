@@ -9,7 +9,7 @@ export type ValidBrowserType =
     | typeof ValidMacOSBrowsers[number]
     | typeof ValidLinuxBrowsers[number];
 
-interface CurlImpersonateOptions {
+export interface CurlImpersonateOptions {
     method: string;
     headers: Object;
     flags?: Array<string>;
@@ -20,7 +20,7 @@ interface CurlImpersonateOptions {
     impersonate?: ValidBrowserType;
 }
 
-interface CurlResponse {
+export interface CurlImpersonateResponse {
     ip?: string,
     port?: number,
     status?: number;
@@ -28,5 +28,3 @@ interface CurlResponse {
     responseHeaders: Object;
     requestHeaders: Object;
 }
-
-export { CurlImpersonateOptions, CurlResponse }
