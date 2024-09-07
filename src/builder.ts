@@ -17,7 +17,6 @@ export interface RequestPreset<T extends BrowserType> {
 export class RequestBuilder {
     private _url: string = "";
     private _browser?: Browser;
-    private _binary?: string;
     private _preset?: Preset;
     private _method: string = "GET";
     private _flags: string[] = [];
@@ -63,12 +62,7 @@ export class RequestBuilder {
 
     async send() {
         const browser = this._browser ?? getDefaultPlatformBrowser();
-        if (browser === undefined) {
-            throw new Error("Unable to resolve a default browser.");
-        }
-
         const preset = this._preset ?? Object.values(BrowserPresets[browser.name])[0];
-
         const headers = this.buildHeaderFlags({ ...this._headers, ...preset.headers });
 
         const command = [

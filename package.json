@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
+    "clean": "rm -rf dist",
     "test": "jest"
   },
   "keywords": [
@@ -13,8 +14,8 @@
     "curl-impersonate",
     "typescript"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "battlesquid",
+  "license": "MIT",
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.5",
@@ -26,6 +27,7 @@
     "esm": "^3.2.25"
   },
   "volta": {
-    "node": "20.11.0"
+    "node": "20.11.0",
+    "yarn": "1.22.22"
   }
 }
