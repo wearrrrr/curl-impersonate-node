@@ -14,7 +14,7 @@ export type ChromePresetVersion = "107" | "110" | "116";
 export const ChromePresets: Record<ChromePresetVersion, Preset> = {
     "107": {
         headers: {
-            "sec-ch-ua": `"Google Chrome";v="107", "Chromium";v="107", "Not=A?Brand";v="24"`,
+            "sec-ch-ua": `\\"Google Chrome\\";v=\\"107\\", \\"Chromium\\";v=\\"107\\", \\"Not=A?Brand\\";v=\\"24\\"`,
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": "Windows",
             "Upgrade-Insecure-Requests": "1",
@@ -40,7 +40,7 @@ export const ChromePresets: Record<ChromePresetVersion, Preset> = {
     },
     '110': {
         headers: {
-            "sec-ch-ua": `"Chromium";v="110", "Not A(Brand";v="24", "Google Chrome";v="110"`,
+            "sec-ch-ua": `\\"Chromium\\";v=\"110\\", \\"Not A(Brand\\";v=\\"24\\", \\"Google Chrome\\";v=\\"110\\"`,
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": "Windows",
             "Upgrade-Insecure-Requests": "1",
@@ -66,7 +66,7 @@ export const ChromePresets: Record<ChromePresetVersion, Preset> = {
     },
     "116": {
         headers: {
-            "sec-ch-ua": `"Chromium";v="116", "Not A;Brand";v="99", "Google Chrome";v="116"`,
+            "sec-ch-ua": `\\"Chromium\\";v=\\"116\\", \\"Not A;Brand\\";v=\\"99\\", \\"Google Chrome\\";v=\\"116\\"`,
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": "Windows",
             "Upgrade-Insecure-Requests": "1",
