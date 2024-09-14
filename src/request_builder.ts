@@ -457,6 +457,7 @@ export class RequestBuilder {
         const flagBlacklist = [
             "-w",
             "-s",
+            "-v", // TODO: potentially add a way to parse stdout with flag included
             "-X"
         ];
         return flags.filter(flag => !flagBlacklist.includes(flag));
