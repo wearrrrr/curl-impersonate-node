@@ -432,7 +432,7 @@ export class RequestBuilder {
             "-s",
             `-w "\\n%{json}"`,
             `-X ${this._method}`,
-            `${this._url}`,
+            `"${this._url}"`,
         ].join(" ");
 
         return new Promise((resolve, reject) => {
