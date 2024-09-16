@@ -16,6 +16,11 @@ export const BROWSERS: Record<string, Browser[] | undefined> = {
             name: "chrome",
             arch: "x64",
             binary: "chrome-x64.exe",
+        },
+        {
+            name: "safari",
+            arch: "x64",
+            binary: "chrome-x64.exe",
         }
     ],
     darwin: [
