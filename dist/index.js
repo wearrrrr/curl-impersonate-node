@@ -8,6 +8,7 @@
 import presets from "./presets.js";
 import * as proc from "child_process";
 import * as path from 'path';
+import * as fs from "fs";
 const __dirname = import.meta.dirname;
 export class CurlImpersonate {
     url;
@@ -37,6 +38,12 @@ export class CurlImpersonate {
         return new Promise((resolve, reject) => {
             if (this.validateOptions(this.options)) {
                 this.setProperBinary();
+                if (this.binary) {
+                    if (!fs.existsSync(path.join(__dirname, '..', 'bin', this.binary))) {
+                        throw new Error("Binary not found! Please check your installation.");
+                    }
+                    fs.chmodSync(path.join(__dirname, '..', 'bin', this.binary), 0o755);
+                }
                 this.checkIfPresetAndMerge();
                 let headers = this.convertHeaderObjectToCURL();
                 let flags = this.options.flags || [];
