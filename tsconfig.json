@@ -1,15 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ESNext",       // Target ESNext for modern features
-    "module": "CommonJS",     // Output CommonJS for Node.js compatibility
-    "strict": true,           // Enable strict type checking
-    "esModuleInterop": true,  // Enable ES module interop
-    "forceConsistentCasingInFileNames": true, // Ensure consistent file names
-    "outDir": "./dist",       // Output directory for compiled files
-    "rootDir": "./src",       // Source directory for TypeScript files
-    "declaration": true,      // Generate type declaration files
-    "declarationDir": "./dist", // Directory for declaration files
-    "sourceMap": true         // Generate source maps for debugging
+    "target": "ES2022",
+    "module": "ES2022",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationDir": "./dist",
+    "sourceMap": true,
+    "moduleResolution": "node"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
