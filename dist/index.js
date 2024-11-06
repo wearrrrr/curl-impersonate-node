@@ -8,6 +8,7 @@
 import presets from "./presets.js";
 import * as proc from "child_process";
 import * as path from 'path';
+const __dirname = import.meta.dirname;
 export class CurlImpersonate {
     url;
     options;
