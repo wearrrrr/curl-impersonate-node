@@ -1,4 +1,4 @@
-import { CurlImpersonateOptions, CurlResponse } from "./interfaces";
+import { CurlImpersonateOptions, CurlResponse } from "./interfaces.js";
 export declare class CurlImpersonate {
     url: string;
     options: CurlImpersonateOptions;

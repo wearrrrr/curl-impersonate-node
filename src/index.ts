@@ -6,11 +6,6 @@
 
 */
 
-import * as proc from "child_process";
-import * as path from 'path';
-
-
-
 /*
 
 CurlImpersonateOptions:
@@ -24,8 +19,10 @@ CurlImpersonateOptions:
 
 */
 
-import { CurlImpersonateOptions, CurlResponse } from "./interfaces";
-import { presets } from "./presets";
+import { CurlImpersonateOptions, CurlResponse } from "./interfaces.js";
+import presets from "./presets.js";
+import * as proc from "child_process";
+import * as path from 'path';
 
 
 export class CurlImpersonate {

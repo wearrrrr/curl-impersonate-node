@@ -5,9 +5,9 @@
     IF YOU PAID FOR THIS SOFTWARE, YOU HAVE BEEN SCAMMED!
 
 */
+import presets from "./presets.js";
 import * as proc from "child_process";
 import * as path from 'path';
-import { presets } from "./presets";
 export class CurlImpersonate {
     url;
     options;
@@ -183,7 +183,6 @@ export class CurlImpersonate {
         return returnObject;
     }
     extractRequestData(verbose) {
-        // Define regular expressions to extract information
         const ipAddressRegex = /Trying (\S+):(\d+)/;
         const httpStatusRegex = /< HTTP\/2 (\d+) ([^\n]+)/;
         // Extract IP address and port
@@ -212,11 +211,11 @@ export class CurlImpersonate {
         const match = verbose.match(httpResponseRegex);
         if (match) {
             match.forEach((header) => {
-                const headerWithoutPrefix = header.substring(2); // Remove the first two characters
+                const headerWithoutPrefix = header.substring(2);
                 const headerParts = headerWithoutPrefix.split(': ');
                 if (headerParts.length > 1) {
-                    const headerName = headerParts[0].trim(); // Trim any leading/trailing spaces
-                    const headerValue = headerParts[1].trim(); // Trim any leading/trailing spaces
+                    const headerName = headerParts[0].trim();
+                    const headerValue = headerParts[1].trim();
                     responseHeaders[headerName] = headerValue;
                 }
             });

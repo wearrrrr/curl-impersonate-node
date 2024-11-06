@@ -1,4 +1,4 @@
-export declare const presets: {
+declare const presets: {
     'chrome-110': {
         headers: {
             "sec-ch-ua": string;
@@ -64,3 +64,4 @@ export declare const presets: {
         flags: string[];
     };
 };
+export default presets;
