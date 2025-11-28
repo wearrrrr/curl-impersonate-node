@@ -126,6 +126,13 @@ export class CurlImpersonate {
                 break;
             } else if (process.arch == "arm") {
                 if (isFF) {
+                    this.binary = "curl-impersonate-firefox-linux-arm"
+                } else {
+                    this.binary = "curl-impersonate-chrome-linux-arm";
+                }
+                break;
+            } else if (process.arch == "arm64") {
+                if (isFF) {
                     this.binary = "curl-impersonate-firefox-linux-aarch64"
                 } else {
                     this.binary = "curl-impersonate-chrome-linux-aarch64";

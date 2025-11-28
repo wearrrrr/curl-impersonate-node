@@ -38,10 +38,7 @@ export class CurlImpersonate {
         return new Promise((resolve, reject) => {
             if (this.validateOptions(this.options)) {
                 this.setProperBinary();
-                if (this.binary) {
-                    if (!fs.existsSync(path.join(__dirname, '..', 'bin', this.binary))) {
-                        throw new Error("Binary not found! Please check your installation.");
-                    }
+                if (this.binary && fs.existsSync(path.join(__dirname, '..', 'bin', this.binary))) {
                     fs.chmodSync(path.join(__dirname, '..', 'bin', this.binary), 0o755);
                 }
                 this.checkIfPresetAndMerge();
@@ -116,6 +113,15 @@ export class CurlImpersonate {
                     break;
                 }
                 else if (process.arch == "arm") {
+                    if (isFF) {
+                        this.binary = "curl-impersonate-firefox-linux-arm";
+                    }
+                    else {
+                        this.binary = "curl-impersonate-chrome-linux-arm";
+                    }
+                    break;
+                }
+                else if (process.arch == "arm64") {
                     if (isFF) {
                         this.binary = "curl-impersonate-firefox-linux-aarch64";
                     }
