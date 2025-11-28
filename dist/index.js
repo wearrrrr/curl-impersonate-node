@@ -89,7 +89,7 @@ export class CurlImpersonate {
     setupBodyArgument(body) {
         if (body !== undefined) {
             try {
-                JSON.stringify(body);
+                return JSON.stringify(body);
             }
             catch {
                 return body; // Assume that content type is anything except www-form-urlencoded or form-data, not quite sure if graphql is supported.
